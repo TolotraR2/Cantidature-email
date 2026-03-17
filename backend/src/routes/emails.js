@@ -1,7 +1,7 @@
 import express from 'express';
 import { readJSON, appendJSON, updateJSON, writeJSON } from '../models/fileDb.js';
 import { sendEmail } from '../utils/emailService.js';
-import { generateLettrePDF, generateCVPDF } from '../utils/pdfGenerator.js';
+import { generateLettrePDF } from '../utils/pdfGenerator.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -70,37 +70,38 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
     const subject = `Candidature – ${config.poste_recherche}`;
     const htmlContent = remplacerVariables(config.lettre_motivation, entreprise, config);
 
-    // Générer les PDFs avec attachments
+    // Générer la lettre PDF
     const prenom = config.prenom || 'user';
     const nom = config.nom || 'user';
     const safeName = `${prenom}${nom}`.replace(/[^a-zA-Z0-9]/g, '');
     
     const lettrePdfPath = path.join(tmpDir, `Lettre_${safeName}.pdf`);
-    const cvPdfPath = path.join(tmpDir, `Curriculum-vitae-${safeName}.pdf`);
 
     try {
-      // Générer les PDFs
+      // Générer la lettre PDF
       await generateLettrePDF(entreprise, config, lettrePdfPath);
-      await generateCVPDF(config, cvPdfPath);
 
       // Préparer les attachments
       const attachments = [
         {
           filename: `Lettre_${safeName}.pdf`,
           path: lettrePdfPath
-        },
-        {
-          filename: `Curriculum-vitae-${safeName}.pdf`,
-          path: cvPdfPath
         }
       ];
+
+      // Ajouter le CV uploadé s'il existe
+      if (config.cv_path && fs.existsSync(config.cv_path)) {
+        attachments.push({
+          filename: `CV-${safeName}.pdf`,
+          path: config.cv_path
+        });
+      }
 
       const result = await sendEmail(entreprise.email, subject, htmlContent, attachments, config.email, appPassword);
 
       if (result.success) {
-        // Nettoyer les fichiers temporaires
+        // Nettoyer la lettre temporaire
         fs.unlink(lettrePdfPath, () => {});
-        fs.unlink(cvPdfPath, () => {});
 
         // Mettre à jour le statut
         const index = entreprises.findIndex(e => e.id === entrepriseId);

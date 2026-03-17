@@ -62,51 +62,6 @@ export const generateLettrePDF = (entreprise, config, outputPath) => {
   });
 };
 
-export const generateCVPDF = (config, outputPath) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new PDFDocument();
-      const stream = fs.createWriteStream(outputPath);
-
-      doc.pipe(stream);
-
-      // En-tête
-      doc.fontSize(16).font('Helvetica-Bold').text(config.nom_complet, 50, 50);
-      doc.fontSize(10).font('Helvetica').text(config.email, 50, 75);
-      if (config.telephone) doc.text(`Téléphone: ${config.telephone}`, 50, 90);
-      if (config.adresse) doc.text(config.adresse, 50, 105);
-
-      // Poste recherché
-      doc.moveDown(2);
-      doc.fontSize(12).font('Helvetica-Bold').text('Poste Recherché');
-      doc.fontSize(10).font('Helvetica').text(config.poste_recherche || 'Non spécifié');
-
-      // Compétences
-      doc.moveDown(2);
-      doc.fontSize(12).font('Helvetica-Bold').text('Compétences');
-      doc.fontSize(10).font('Helvetica').text(config.competences || 'À compléter dans la configuration');
-
-      // Formation
-      doc.moveDown(2);
-      doc.fontSize(12).font('Helvetica-Bold').text('Formation');
-      doc.fontSize(10).font('Helvetica').text(config.formation || 'À compléter dans la configuration');
-
-      // Expérience
-      doc.moveDown(2);
-      doc.fontSize(12).font('Helvetica-Bold').text('Expérience Professionnelle');
-      doc.fontSize(10).font('Helvetica').text(config.experience || 'À compléter dans la configuration');
-
-      doc.end();
-
-      stream.on('finish', () => resolve(outputPath));
-      stream.on('error', reject);
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
 export default {
-  generateLettrePDF,
-  generateCVPDF
+  generateLettrePDF
 };

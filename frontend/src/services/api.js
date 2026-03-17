@@ -32,7 +32,19 @@ export const templatesAPI = {
 // Configuration
 export const configAPI = {
   get: () => client.get('/config'),
-  update: (data) => client.put('/config', data)
+  update: (data) => client.put('/config', data),
+  uploadCV: (formData) => {
+    // Pour l'upload, nous créons une requête spéciale sans Content-Type
+    return axios.post(
+      `${API_BASE}/config/upload-cv`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+  }
 }
 
 // Emails
