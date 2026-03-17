@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd backend && npm install",
+  "startCommand": "cd backend && npm start",
+  "ignoreCommand": "cd backend && npm install --legacy-peer-deps"
+}
