@@ -19,67 +19,28 @@ if (!fs.existsSync(tmpDir)) {
 
 // Fonction pour créer le message d'email selon le type de candidature
 const creerMessageEmail = (entreprise, config, type_candidature) => {
-  const poste = config.poste_recherche || 'candidat';
-  const nom = config.nom_complet || 'Candidat';
+  const prenom = config.prenom || 'Candidat';
   
   if (type_candidature === 'spontanee') {
     return `
       <p>Bonjour,</p>
-      <p>Je vous ai envoyé ci-joint ma candidature spontanée.</p>
-      <p>Je serais ravi de discuter des opportunités de collaboration avec votre entreprise.</p>
-      <p>Vous trouverez en pièce jointe :</p>
-      <ul>
-        <li>Ma lettre de motivation</li>
-        <li>Mon curriculum vitae</li>
-      </ul>
-      <p>Je reste à votre disposition pour toute question.</p>
-      <p>Cordialement,<br/><strong>${nom}</strong></p>
+      <p>Je vous ai envoyé ci-joint ma candidature spontanée pour un poste chez vous.</p>
+      <p>Vous trouverez en pièce jointe:</p>
+      <p>Lettre de motivation et curriculum vitae</p>
+      <p>Je reste à votre disposition pour toutes questions.</p>
+      <p>Cordialement<br/>${prenom}</p>
     `;
   } else {
     // recrutement
     return `
       <p>Bonjour,</p>
-      <p>Je vous ai envoyé ci-joint ma candidature pour le poste de <strong>${poste}</strong>.</p>
-      <p>Vous trouverez en pièce jointe :</p>
-      <ul>
-        <li>Ma lettre de motivation</li>
-        <li>Mon curriculum vitae</li>
-      </ul>
-      <p>Je serais heureux de vous exposer en détail comment je pourrais contribuer au succès de votre projet.</p>
-      <p>Je reste à votre disposition pour un entretien.</p>
-      <p>Cordialement,<br/><strong>${nom}</strong></p>
+      <p>Je vous ai envoyé ci-joint ma candidature pour un poste chez vous.</p>
+      <p>Vous trouverez en pièce jointe:</p>
+      <p>Lettre de motivation et curriculum vitae</p>
+      <p>Je reste à votre disposition pour toutes questions.</p>
+      <p>Cordialement<br/>${prenom}</p>
     `;
   }
-};
-
-// Fonction pour remplacer les variables dans la lettre de motivation
-const remplacerVariables = (lettre, entreprise, config) => {
-  if (!lettre) {
-    // Fallback si pas de lettre configurée
-    return `
-      <p>Madame, Monsieur,</p>
-      <p>Je vous écris pour vous proposer ma candidature au poste de <strong>${config.poste_recherche}</strong> au sein de votre entreprise <strong>${entreprise.nom_entreprise}</strong>.</p>
-      <p>Vous trouverez en pièce jointe mon CV ainsi que ma lettre de motivation.</p>
-      <p>Je reste à votre disposition pour discuter de mes qualifications.</p>
-      <p>Cordialement,<br/>${config.nom_complet}</p>
-    `;
-  }
-
-  const today = new Date().toLocaleDateString('fr-FR', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-
-  return lettre
-    .replace(/{ENTREPRISE}/g, entreprise.nom_entreprise)
-    .replace(/{VILLE}/g, entreprise.ville || '')
-    .replace(/{DATE}/g, today)
-    .replace(/{NOM}/g, config.nom_complet)
-    .replace(/{POSTE}/g, config.poste_recherche)
-    .split('\n')
-    .map(ligne => `<p>${ligne}</p>`)
-    .join('');
 };
 
 // Envoyer une candidature unique
@@ -88,53 +49,103 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
     const { entrepriseId } = req.params;
     const { appPassword } = req.body;
     
+    console.log('=== ENVOYER UNE CANDIDATURE ===');
+    console.log('Entreprise ID:', entrepriseId);
+    
     // Récupérer l'entreprise et la config
     const entreprises = readJSON('entreprises.json');
     const entreprise = entreprises.find(e => e.id === entrepriseId);
     const config = readJSON('config.json')[0];
 
+    console.log('Entreprise trouvée:', !!entreprise);
+    console.log('Config email:', config?.email);
+    console.log('Password reçu:', !!appPassword);
+
     if (!entreprise) {
+      console.error('Erreur: Entreprise non trouvée');
       return res.status(404).json({ error: 'Entreprise non trouvée' });
     }
 
     if (!config.email || !appPassword) {
+      console.error('Erreur: Email ou password manquant');
       return res.status(400).json({ error: 'Email utilisateur ou mot de passe manquant' });
     }
+
+    // Vérifier CV
+    const cvPath = path.join(__dirname, '../../uploads/CV.pdf');
+    console.log('Chemin CV:', cvPath);
+    console.log('CV existe:', fs.existsSync(cvPath));
+    
+    if (!fs.existsSync(cvPath)) {
+      console.error('Erreur: CV.pdf introuvable');
+      return res.status(400).json({ error: 'Le fichier CV.pdf n\'existe pas dans le dossier uploads' });
+    }
+
+    // Vérifier lettre de motivation
+    if (!config.lettre_motivation || config.lettre_motivation.trim() === '') {
+      console.error('Erreur: Lettre de motivation vide');
+      return res.status(400).json({ error: 'Veuillez ajouter une lettre de motivation dans Configuration' });
+    }
+    console.log('Lettre de motivation OK');
 
     // Générer le contenu du message avec la lettre de motivation du config
     const subject = `Candidature – ${config.poste_recherche}`;
     const messageContenu = creerMessageEmail(entreprise, config, entreprise.type_candidature);
-    
-    // Utiliser la lettre de motivation du config pour enrichir le message
-    const lettreMotivatoin = remplacerVariables(config.lettre_motivation, entreprise, config);
 
     try {
       // Préparer les attachments
       const attachments = [];
+      const nomSafeCV = (config.nom_complet || 'CV').replace(/[^a-zA-Z0-9\s-]/g, '').trim();
 
-      // Ajouter le CV depuis le dossier uploads
-      const cvPath = path.join(__dirname, '../../uploads/CV.pdf');
+      // Renommer le CV avec le nom de l'utilisateur
       if (fs.existsSync(cvPath)) {
+        const cvRenamedPath = path.join(tmpDir, `Curriculum_vitae-${nomSafeCV}.pdf`);
+        
+        // Copier le CV avec le nouveau nom
+        fs.copyFileSync(cvPath, cvRenamedPath);
+        console.log('CV copié et renommé:', cvRenamedPath);
+        
         attachments.push({
-          filename: 'CV.pdf',
-          path: cvPath
+          filename: `Curriculum_vitae-${nomSafeCV}.pdf`,
+          path: cvRenamedPath
         });
       } else {
+        console.error('Erreur: CV.pdf introuvable (double vérification)');
         return res.status(400).json({ error: 'Le fichier CV.pdf n\'existe pas dans le dossier uploads' });
       }
 
-      // Créer le message complet: intro + lettre de motivation
-      const messageComplet = `
-        ${messageContenu}
-        
-        <hr/>
-        
-        ${lettreMotivatoin}
-      `;
+      // Générer le PDF de la lettre de motivation personnalisée
+      const lettreTextePure = config.lettre_motivation
+        .replace(/{ENTREPRISE}/g, entreprise.nom_entreprise)
+        .replace(/{VILLE}/g, entreprise.ville || '')
+        .replace(/{DATE}/g, new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }))
+        .replace(/{NOM}/g, config.nom_complet)
+        .replace(/{POSTE}/g, config.poste_recherche);
 
-      const result = await sendEmail(entreprise.email, subject, messageComplet, attachments, config.email, appPassword);
+      const lmPdfPath = path.join(tmpDir, `Lettre_Motivation-${nomSafeCV}.pdf`);
+      await generateLettrePDF(entreprise, config, lmPdfPath, lettreTextePure);
+      console.log('PDF de lettre de motivation généré:', lmPdfPath);
+
+      attachments.push({
+        filename: `Lettre_Motivation-${nomSafeCV}.pdf`,
+        path: lmPdfPath
+      });
+
+      const result = await sendEmail(entreprise.email, subject, messageContenu, attachments, config.email, appPassword);
 
       if (result.success) {
+        console.log('Email envoyé avec succès à:', entreprise.email);
+        console.log('Message ID:', result.messageId);
+        
+        // Nettoyer les fichiers renommés du tmp
+        attachments.forEach(att => {
+          if (att.path.includes('/tmp') || att.path.includes('\\tmp')) {
+            fs.unlink(att.path, (err) => {
+              if (err) console.error('Erreur suppression fichier temporaire:', err);
+            });
+          }
+        });
+        
         // Mettre à jour le statut
         const index = entreprises.findIndex(e => e.id === entrepriseId);
         if (index > -1) {
@@ -155,6 +166,7 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
 
         res.json({ success: true, message: 'Candidature envoyée avec succès' });
       } else {
+        console.error('Erreur sendEmail:', result.error);
         throw new Error(result.error);
       }
     } catch (emailError) {
@@ -162,6 +174,7 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
       res.status(500).json({ error: emailError.message });
     }
   } catch (error) {
+    console.error('Erreur global:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -187,8 +200,16 @@ router.get('/lettre/:entrepriseId', async (req, res) => {
     
     const lettrePdfPath = path.join(tmpDir, `Lettre_${safeName}.pdf`);
 
+    // Préparer la lettre personnalisée avec les variables remplacées
+    const lettreTextePure = config.lettre_motivation
+      .replace(/{ENTREPRISE}/g, entreprise.nom_entreprise)
+      .replace(/{VILLE}/g, entreprise.ville || '')
+      .replace(/{DATE}/g, new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }))
+      .replace(/{NOM}/g, config.nom_complet)
+      .replace(/{POSTE}/g, config.poste_recherche);
+
     // Générer la lettre
-    await generateLettrePDF(entreprise, config, lettrePdfPath);
+    await generateLettrePDF(entreprise, config, lettrePdfPath, lettreTextePure);
 
     // Retourner le fichier avec le bon nom
     const filename = `LM-${entreprise.nom_entreprise.replace(/[^a-zA-Z0-9]/g, '')}.pdf`;
@@ -217,48 +238,75 @@ router.post('/envoyer-toutes', async (req, res) => {
     let entreprises = readJSON('entreprises.json');
     const config = readJSON('config.json')[0];
     
+    console.log('=== ENVOYER TOUTES ===');
+    console.log('Config:', { email: config?.email, hasPassword: !!appPassword });
+    console.log('Nombres entreprises:', entreprises.length);
+    
     if (!config.email || !appPassword) {
+      console.error('Erreur: Email ou password manquant');
       return res.status(400).json({ error: 'Email utilisateur ou mot de passe manquant' });
     }
     
     const nonEnvoyees = entreprises.filter(e => e.statut === STATUT_CANDIDATURE.NON_ENVOYE);
+    console.log('Entreprises à envoyer:', nonEnvoyees.length);
 
     let sent = 0;
     let failed = 0;
 
     // Vérifier que le CV existe
     const cvPath = path.join(__dirname, '../../uploads/CV.pdf');
+    console.log('Chemin CV:', cvPath);
+    console.log('CV existe:', fs.existsSync(cvPath));
+    
     if (!fs.existsSync(cvPath)) {
+      console.error('Erreur: CV.pdf introuvable');
       return res.status(400).json({ error: 'Le fichier CV.pdf n\'existe pas dans le dossier uploads' });
     }
+
+    // Vérifier lettre de motivation
+    if (!config.lettre_motivation || config.lettre_motivation.trim() === '') {
+      console.error('Erreur: Lettre de motivation vide');
+      return res.status(400).json({ error: 'Veuillez ajouter une lettre de motivation dans Configuration' });
+    }
+    console.log('Lettre de motivation OK');
 
     for (const entreprise of nonEnvoyees) {
       try {
         const subject = `Candidature – ${config.poste_recherche}`;
         const messageContenu = creerMessageEmail(entreprise, config, entreprise.type_candidature);
-        const lettreMotivatoin = remplacerVariables(config.lettre_motivation, entreprise, config);
 
-        // Créer le message complet: intro + lettre de motivation
-        const messageComplet = `
-          ${messageContenu}
-          
-          <hr/>
-          
-          ${lettreMotivatoin}
-        `;
+        // Préparer les attachments - renommer le CV avec le nom de l'utilisateur
+        const nomSafeCV = (config.nom_complet || 'CV').replace(/[^a-zA-Z0-9\s-]/g, '').trim();
+        const cvRenamedPath = path.join(tmpDir, `Curriculum_vitae-${nomSafeCV}.pdf`);
+        fs.copyFileSync(cvPath, cvRenamedPath);
+        
+        // Générer le PDF de la lettre de motivation personnalisée
+        const lettreTextePure = config.lettre_motivation
+          .replace(/{ENTREPRISE}/g, entreprise.nom_entreprise)
+          .replace(/{VILLE}/g, entreprise.ville || '')
+          .replace(/{DATE}/g, new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }))
+          .replace(/{NOM}/g, config.nom_complet)
+          .replace(/{POSTE}/g, config.poste_recherche);
 
-        // Préparer les attachments
+        const lmPdfPath = path.join(tmpDir, `Lettre_Motivation-${nomSafeCV}.pdf`);
+        await generateLettrePDF(entreprise, config, lmPdfPath, lettreTextePure);
+
         const attachments = [
           {
-            filename: 'CV.pdf',
-            path: cvPath
+            filename: `Curriculum_vitae-${nomSafeCV}.pdf`,
+            path: cvRenamedPath
+          },
+          {
+            filename: `Lettre_Motivation-${nomSafeCV}.pdf`,
+            path: lmPdfPath
           }
         ];
 
-        const result = await sendEmail(entreprise.email, subject, messageComplet, attachments, config.email, appPassword);
+        const result = await sendEmail(entreprise.email, subject, messageContenu, attachments, config.email, appPassword);
 
         if (result.success) {
           sent++;
+          console.log(`Email envoyé avec succès à ${entreprise.nom_entreprise} (${entreprise.email})`);
           const index = entreprises.findIndex(e => e.id === entreprise.id);
           if (index > -1) {
             entreprises[index].statut = STATUT_CANDIDATURE.ENVOYE;
@@ -266,6 +314,7 @@ router.post('/envoyer-toutes', async (req, res) => {
           }
         } else {
           failed++;
+          console.error(`Erreur pour ${entreprise.nom_entreprise}: ${result.error}`);
           const index = entreprises.findIndex(e => e.id === entreprise.id);
           if (index > -1) {
             entreprises[index].erreur = result.error;
@@ -281,6 +330,19 @@ router.post('/envoyer-toutes', async (req, res) => {
     }
 
     writeJSON('entreprises.json', entreprises);
+    
+    // Nettoyer les fichiers renommés du dossier tmp
+    try {
+      const files = fs.readdirSync(tmpDir);
+      files.forEach(file => {
+        if ((file.startsWith('Curriculum_vitae-') || file.startsWith('Lettre_Motivation-')) && file.endsWith('.pdf')) {
+          fs.unlinkSync(path.join(tmpDir, file));
+        }
+      });
+    } catch (err) {
+      console.error('Erreur nettoyage fichiers temporaires:', err);
+    }
+    
     res.json({ 
       message: `${sent} candidatures envoyées, ${failed} échouées`,
       sent,

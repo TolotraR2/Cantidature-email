@@ -1,7 +1,7 @@
 [
   {
     "nom_complet": "RAHARIJAONA Tolojanahary",
-    "adresse": "Lot 2850 Tanamborozano\nToamasina",
+    "adresse": "Lot 2850 Tanamborozano Toamasina",
     "email": "raharijaonatolotra2@gmail.com",
     "telephone": "+261 38 30 005 20",
     "poste_recherche": "Administrateur Système et Réseau",
@@ -10,7 +10,7 @@
     "max_envois_par_jour": 50,
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587,
-    "lettre_motivation": "Madame, Monsieur,\n\nJe suis vivement intéressé par le poste de {POSTE} au sein de votre entreprise {ENTREPRISE}, basée à {VILLE}.\n\nPassionné par le domaine et possédant une solide expérience en développement web et gestion de projets, je suis convaincu que mes compétences correspondent parfaitement à vos attentes. Mon parcours m'a permis d'acquérir une expertise en JavaScript, React et Node.js, ainsi qu'une bonne capacité d'adaptation et de travail en équipe.\n\nJe suis particulièrement attiré par les défis innovants que propose votre entreprise et je serais ravi de contribuer à vos projets futurs. Mon engagement envers l'excellence et mon désir d'apprentissage continu me permettront de créer une valeur ajoutée à votre organisation.\n\nJe reste disponible pour discuter davantage de ma candidature et démontrer comment je peux être un atout pour {ENTREPRISE}.\n\nJe vous remercie de l'attention que vous porterez à ma candidature et reste dans l'attente de vos nouvelles.\n\nCordialement,\n{NOM}\n\n{DATE}",
+    "lettre_motivation": "Je suis vivement intéressé par le poste de {POSTE} au sein de votre entreprise {ENTREPRISE}, basée à {VILLE}.\n\nPassionné par le domaine et possédant une solide expérience en développement web et gestion de projets, je suis convaincu que mes compétences correspondent parfaitement à vos attentes. Mon parcours m'a permis d'acquérir une expertise en JavaScript, React et Node.js, ainsi qu'une bonne capacité d'adaptation et de travail en équipe.\n\nJe suis particulièrement attiré par les défis innovants que propose votre entreprise et je serais ravi de contribuer à vos projets futurs. Mon engagement envers l'excellence et mon désir d'apprentissage continu me permettront de créer une valeur ajoutée à votre organisation.\n\nJe reste disponible pour discuter davantage de ma candidature et démontrer comment je peux être un atout pour {ENTREPRISE}.\n\nJe vous remercie de l'attention que vous porterez à ma candidature et reste dans l'attente de vos nouvelles.\n\n                                                                                                                                                     Cordialement,\n                                                                                                                                                     {NOM}",
     "cv_path": "cv_1773750998485.pdf",
     "prenom": "Tolojanahary",
     "nom": "RAHARIJAONA"

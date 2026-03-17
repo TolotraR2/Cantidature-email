@@ -19,5 +19,54 @@
     "statut": "succes",
     "message": "Email envoyé avec succès",
     "date_envoi": "2026-03-17T12:53:48.402Z"
+  },
+  {
+    "id": "42fda1ef-e3b5-43cb-8027-79cc105475de",
+    "entreprise_id": "38051fcd-89c6-4233-9ca1-d68cc1963507",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T13:16:32.979Z"
+  },
+  {
+    "id": "b3d59469-1ff1-489e-b659-d435e9d4cff2",
+    "entreprise_id": "cf8616e9-3dee-4c82-b4fa-dc61eb4f8b67",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T13:51:47.095Z"
+  },
+  {
+    "id": "adc47bd6-09d8-409b-b971-fb63170c2b6f",
+    "entreprise_id": "ffc9b67a-2bdf-47a4-9dc6-585e934bf903",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T14:07:03.571Z"
+  },
+  {
+    "id": "9da94b58-e487-4b29-87b4-87202cc066ef",
+    "entreprise_id": "5791a19c-f8fd-48da-9258-8b1437339ce1",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T14:11:26.014Z"
+  },
+  {
+    "id": "a4b7340a-2d4c-41dc-9873-d2fbf72e3df4",
+    "entreprise_id": "d3bcb3ad-e6ea-4cde-9969-9cd9e47b3f96",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T14:14:33.856Z"
+  },
+  {
+    "id": "66d379bb-6898-46f5-a192-4a0eacef01ba",
+    "entreprise_id": "5231bfc8-3baa-4c10-8a21-037473dd1e7b",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T14:17:53.059Z"
+  },
+  {
+    "id": "f569d5f2-7d7d-4be4-b1d2-553384102654",
+    "entreprise_id": "0a0c2bce-252b-4723-8e04-d1c52fbe8427",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T14:21:43.232Z"
   }
 ]
