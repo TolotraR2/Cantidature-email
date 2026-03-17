@@ -10,5 +10,17 @@
     "date_ajout": "2026-03-17T11:16:20.461Z",
     "date_envoi": "2026-03-17T12:10:38.377Z",
     "erreur": null
+  },
+  {
+    "id": "25403af6-594b-4c2d-aa45-1ef37dfea24c",
+    "nom_entreprise": "NIRINASOA",
+    "email": "nirinasoarajaonarimanana@gmail.com",
+    "ville": "Antananarivo",
+    "type_candidature": "recrutement",
+    "tags": [],
+    "statut": "envoye",
+    "date_ajout": "2026-03-17T12:38:05.611Z",
+    "date_envoi": "2026-03-17T12:38:18.060Z",
+    "erreur": null
   }
 ]

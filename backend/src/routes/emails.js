@@ -17,6 +17,41 @@ if (!fs.existsSync(tmpDir)) {
   fs.mkdirSync(tmpDir, { recursive: true });
 }
 
+// Fonction pour créer le message d'email selon le type de candidature
+const creerMessageEmail = (entreprise, config, type_candidature) => {
+  const poste = config.poste_recherche || 'candidat';
+  const nom = config.nom_complet || 'Candidat';
+  
+  if (type_candidature === 'spontanee') {
+    return `
+      <p>Bonjour,</p>
+      <p>Je vous ai envoyé ci-joint ma candidature spontanée.</p>
+      <p>Je serais ravi de discuter des opportunités de collaboration avec votre entreprise.</p>
+      <p>Vous trouverez en pièce jointe :</p>
+      <ul>
+        <li>Ma lettre de motivation</li>
+        <li>Mon curriculum vitae</li>
+      </ul>
+      <p>Je reste à votre disposition pour toute question.</p>
+      <p>Cordialement,<br/><strong>${nom}</strong></p>
+    `;
+  } else {
+    // recrutement
+    return `
+      <p>Bonjour,</p>
+      <p>Je vous ai envoyé ci-joint ma candidature pour le poste de <strong>${poste}</strong>.</p>
+      <p>Vous trouverez en pièce jointe :</p>
+      <ul>
+        <li>Ma lettre de motivation</li>
+        <li>Mon curriculum vitae</li>
+      </ul>
+      <p>Je serais heureux de vous exposer en détail comment je pourrais contribuer au succès de votre projet.</p>
+      <p>Je reste à votre disposition pour un entretien.</p>
+      <p>Cordialement,<br/><strong>${nom}</strong></p>
+    `;
+  }
+};
+
 // Fonction pour remplacer les variables dans la lettre de motivation
 const remplacerVariables = (lettre, entreprise, config) => {
   if (!lettre) {
@@ -66,9 +101,9 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
       return res.status(400).json({ error: 'Email utilisateur ou mot de passe manquant' });
     }
 
-    // Générer le contenu HTML avec les variables remplacées
+    // Générer le contenu du message avec les infos de l'entreprise
     const subject = `Candidature – ${config.poste_recherche}`;
-    const htmlContent = remplacerVariables(config.lettre_motivation, entreprise, config);
+    const messageContenu = creerMessageEmail(entreprise, config, entreprise.type_candidature);
 
     // Générer la lettre PDF
     const prenom = config.prenom || 'user';
@@ -82,12 +117,15 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
       await generateLettrePDF(entreprise, config, lettrePdfPath);
 
       // Préparer les attachments
-      const attachments = [
-        {
+      const attachments = [];
+
+      // Ajouter la lettre PDF
+      if (fs.existsSync(lettrePdfPath)) {
+        attachments.push({
           filename: `Lettre_${safeName}.pdf`,
           path: lettrePdfPath
-        }
-      ];
+        });
+      }
 
       // Ajouter le CV uploadé s'il existe
       if (config.cv_path && fs.existsSync(config.cv_path)) {
@@ -97,7 +135,11 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
         });
       }
 
-      const result = await sendEmail(entreprise.email, subject, htmlContent, attachments, config.email, appPassword);
+      if (attachments.length === 0) {
+        return res.status(400).json({ error: 'Veuillez uploader votre CV dans la configuration' });
+      }
+
+      const result = await sendEmail(entreprise.email, subject, messageContenu, attachments, config.email, appPassword);
 
       if (result.success) {
         // Nettoyer la lettre temporaire
@@ -188,17 +230,48 @@ router.post('/envoyer-toutes', async (req, res) => {
       return res.status(400).json({ error: 'Email utilisateur ou mot de passe manquant' });
     }
     
+    if (!config.cv_path) {
+      return res.status(400).json({ error: 'Veuillez uploader votre CV dans la configuration' });
+    }
+    
     const nonEnvoyees = entreprises.filter(e => e.statut === STATUT_CANDIDATURE.NON_ENVOYE);
 
     let sent = 0;
     let failed = 0;
 
+    const prenom = config.prenom || 'user';
+    const nom = config.nom || 'user';
+    const safeName = `${prenom}${nom}`.replace(/[^a-zA-Z0-9]/g, '');
+
     for (const entreprise of nonEnvoyees) {
       try {
         const subject = `Candidature – ${config.poste_recherche}`;
-        const htmlContent = remplacerVariables(config.lettre_motivation, entreprise, config);
+        const messageContenu = creerMessageEmail(entreprise, config, entreprise.type_candidature);
 
-        const result = await sendEmail(entreprise.email, subject, htmlContent, [], config.email, appPassword);
+        // Générer la lettre PDF
+        const lettrePdfPath = path.join(tmpDir, `Lettre_${safeName}.pdf`);
+        await generateLettrePDF(entreprise, config, lettrePdfPath);
+
+        // Préparer les attachments
+        const attachments = [];
+
+        // Ajouter la lettre PDF
+        if (fs.existsSync(lettrePdfPath)) {
+          attachments.push({
+            filename: `Lettre_${safeName}.pdf`,
+            path: lettrePdfPath
+          });
+        }
+
+        // Ajouter le CV uploadé
+        if (fs.existsSync(config.cv_path)) {
+          attachments.push({
+            filename: `CV-${safeName}.pdf`,
+            path: config.cv_path
+          });
+        }
+
+        const result = await sendEmail(entreprise.email, subject, messageContenu, attachments, config.email, appPassword);
 
         if (result.success) {
           sent++;
@@ -207,6 +280,9 @@ router.post('/envoyer-toutes', async (req, res) => {
             entreprises[index].statut = STATUT_CANDIDATURE.ENVOYE;
             entreprises[index].date_envoi = new Date().toISOString();
           }
+          
+          // Nettoyer la lettre temporaire
+          fs.unlink(lettrePdfPath, () => {});
         } else {
           failed++;
           const index = entreprises.findIndex(e => e.id === entreprise.id);
