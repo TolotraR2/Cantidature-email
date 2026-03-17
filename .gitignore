@@ -14,9 +14,13 @@ build/
 .env.*.local
 
 # Uploads and temporary files
-uploads/
 tmp/
 *.pdf
+
+# Keep uploads folder but ignore CV files inside
+uploads/*.pdf
+!uploads/.gitkeep
+!uploads/README.md
 
 # IDE
 .vscode/
