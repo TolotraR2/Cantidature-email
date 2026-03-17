@@ -6,9 +6,9 @@
     "ville": "TAMATAVE",
     "type_candidature": "recrutement",
     "tags": [],
-    "statut": "non_envoye",
+    "statut": "envoye",
     "date_ajout": "2026-03-17T11:16:20.461Z",
-    "date_envoi": null,
+    "date_envoi": "2026-03-17T12:10:38.377Z",
     "erreur": null
   }
 ]

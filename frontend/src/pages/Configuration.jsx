@@ -91,6 +91,28 @@ export default function Configuration() {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 border-b pb-4">Profil Personnel</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block font-semibold text-gray-700 mb-2 text-sm sm:text-base">Prénom</label>
+              <input
+                type="text"
+                value={config?.prenom || ''}
+                onChange={(e) => handleChange('prenom', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                placeholder="Votre prénom"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-2 text-sm sm:text-base">Nom</label>
+              <input
+                type="text"
+                value={config?.nom || ''}
+                onChange={(e) => handleChange('nom', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                placeholder="Votre nom"
+              />
+            </div>
+
             <div className="sm:col-span-2">
               <label className="block font-semibold text-gray-700 mb-2 text-sm sm:text-base">Nom complet</label>
               <input
@@ -218,6 +240,45 @@ export default function Configuration() {
               rows={10}
             />
             <p className="text-xs text-gray-500 mt-2">Cette lettre sera envoyée automatiquement à toutes les entreprises</p>
+          </div>
+        </div>
+
+        {/* Section CV */}
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 space-y-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 border-b pb-4">Votre CV</h2>
+          <p className="text-xs sm:text-sm text-gray-600">Ces informations seront incluses dans votre CV en PDF, envoyé avec chaque candidature</p>
+
+          <div className="sm:col-span-2">
+            <label className="block font-semibold text-gray-700 mb-2 text-sm sm:text-base">Compétences</label>
+            <textarea
+              value={config?.competences || ''}
+              onChange={(e) => handleChange('competences', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              placeholder="ex: JavaScript, React, Node.js, SQL, etc."
+              rows="4"
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block font-semibold text-gray-700 mb-2 text-sm sm:text-base">Formation</label>
+            <textarea
+              value={config?.formation || ''}
+              onChange={(e) => handleChange('formation', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              placeholder="ex: Master Informatique (2022) - Université Paris..."
+              rows="4"
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block font-semibold text-gray-700 mb-2 text-sm sm:text-base">Expérience Professionnelle</label>
+            <textarea
+              value={config?.experience || ''}
+              onChange={(e) => handleChange('experience', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              placeholder="ex: Développeur Full Stack chez TechCompany (2020-2023)..."
+              rows="4"
+            />
           </div>
         </div>
 

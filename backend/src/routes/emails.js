@@ -1,14 +1,21 @@
 import express from 'express';
 import { readJSON, appendJSON, updateJSON, writeJSON } from '../models/fileDb.js';
 import { sendEmail } from '../utils/emailService.js';
-import { generateLettrePDF } from '../utils/pdfGenerator.js';
+import { generateLettrePDF, generateCVPDF } from '../utils/pdfGenerator.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { STATUT_CANDIDATURE } from '../constants.js';
 
 const router = express.Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Créer le répertoire tmp s'il n'existe pas
+const tmpDir = path.join(__dirname, '../../tmp');
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir, { recursive: true });
+}
 
 // Fonction pour remplacer les variables dans la lettre de motivation
 const remplacerVariables = (lettre, entreprise, config) => {
@@ -63,30 +70,62 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
     const subject = `Candidature – ${config.poste_recherche}`;
     const htmlContent = remplacerVariables(config.lettre_motivation, entreprise, config);
 
-    const result = await sendEmail(entreprise.email, subject, htmlContent, [], config.email, appPassword);
+    // Générer les PDFs avec attachments
+    const prenom = config.prenom || 'user';
+    const nom = config.nom || 'user';
+    const safeName = `${prenom}${nom}`.replace(/[^a-zA-Z0-9]/g, '');
+    
+    const lettrePdfPath = path.join(tmpDir, `Lettre_${safeName}.pdf`);
+    const cvPdfPath = path.join(tmpDir, `Curriculum-vitae-${safeName}.pdf`);
 
-    if (result.success) {
-      // Mettre à jour le statut
-      const index = entreprises.findIndex(e => e.id === entrepriseId);
-      if (index > -1) {
-        entreprises[index].statut = STATUT_CANDIDATURE.ENVOYE;
-        entreprises[index].date_envoi = new Date().toISOString();
-        writeJSON('entreprises.json', entreprises);
+    try {
+      // Générer les PDFs
+      await generateLettrePDF(entreprise, config, lettrePdfPath);
+      await generateCVPDF(config, cvPdfPath);
+
+      // Préparer les attachments
+      const attachments = [
+        {
+          filename: `Lettre_${safeName}.pdf`,
+          path: lettrePdfPath
+        },
+        {
+          filename: `Curriculum-vitae-${safeName}.pdf`,
+          path: cvPdfPath
+        }
+      ];
+
+      const result = await sendEmail(entreprise.email, subject, htmlContent, attachments, config.email, appPassword);
+
+      if (result.success) {
+        // Nettoyer les fichiers temporaires
+        fs.unlink(lettrePdfPath, () => {});
+        fs.unlink(cvPdfPath, () => {});
+
+        // Mettre à jour le statut
+        const index = entreprises.findIndex(e => e.id === entrepriseId);
+        if (index > -1) {
+          entreprises[index].statut = STATUT_CANDIDATURE.ENVOYE;
+          entreprises[index].date_envoi = new Date().toISOString();
+          writeJSON('entreprises.json', entreprises);
+        }
+
+        // Enregistrer dans l'historique
+        const historique = {
+          id: uuidv4(),
+          entreprise_id: entrepriseId,
+          statut: 'succes',
+          message: 'Email envoyé avec succès',
+          date_envoi: new Date().toISOString()
+        };
+        appendJSON('historique.json', historique);
+
+        res.json({ success: true, message: 'Candidature envoyée avec succès' });
+      } else {
+        throw new Error(result.error);
       }
-
-      // Enregistrer dans l'historique
-      const historique = {
-        id: uuidv4(),
-        entreprise_id: entrepriseId,
-        statut: 'succes',
-        message: 'Email envoyé avec succès',
-        date_envoi: new Date().toISOString()
-      };
-      appendJSON('historique.json', historique);
-
-      res.json({ success: true, message: 'Candidature envoyée avec succès' });
-    } else {
-      throw new Error(result.error);
+    } catch (pdfError) {
+      res.status(500).json({ error: pdfError.message });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
