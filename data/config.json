@@ -1,0 +1,9 @@
+[
+  {
+    "id": "config-1",
+    "nom_complet": "Votre Nom",
+    "email": "votre.email@example.com",
+    "poste_recherche": "Développeur Full Stack",
+    "template_id": "default"
+  }
+]
