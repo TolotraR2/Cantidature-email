@@ -42,31 +42,6 @@ export default function Configuration() {
     setError('')
   }
 
-  const handleCVUpload = async (e) => {
-    try {
-      const file = e.target.files?.[0]
-      if (!file) return
-
-      if (!file.name.toLowerCase().endsWith('.pdf')) {
-        setError('Seuls les fichiers PDF sont acceptés')
-        return
-      }
-
-      const formData = new FormData()
-      formData.append('cv', file)
-
-      const response = await configAPI.uploadCV(formData)
-      
-      // Mettre à jour la config avec le chemin du CV
-      setConfig({ ...config, cv_path: response.data.filename })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch (error) {
-      console.error('Erreur upload:', error)
-      setError('Erreur lors de l\'upload du CV')
-    }
-  }
-
   const handleSave = async () => {
     try {
       if (appPassword.trim()) {
@@ -265,25 +240,6 @@ export default function Configuration() {
               rows={10}
             />
             <p className="text-xs text-gray-500 mt-2">Cette lettre sera envoyée automatiquement à toutes les entreprises</p>
-          </div>
-        </div>
-
-        {/* Section CV Upload */}
-        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 space-y-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 border-b pb-4">Votre CV</h2>
-          <p className="text-xs sm:text-sm text-gray-600">Téléchargez votre CV en PDF. Il sera joint automatiquement à chaque candidature</p>
-
-          <div className="sm:col-span-2">
-            <label className="block font-semibold text-gray-700 mb-2 text-sm sm:text-base">Fichier CV (PDF)</label>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={handleCVUpload}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-            />
-            {config?.cv_path && (
-              <p className="text-xs text-green-600 mt-2">✓ CV sélectionné: {config.cv_path}</p>
-            )}
           </div>
         </div>
 

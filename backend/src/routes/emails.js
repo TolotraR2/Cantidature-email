@@ -101,50 +101,40 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
       return res.status(400).json({ error: 'Email utilisateur ou mot de passe manquant' });
     }
 
-    // Générer le contenu du message avec les infos de l'entreprise
+    // Générer le contenu du message avec la lettre de motivation du config
     const subject = `Candidature – ${config.poste_recherche}`;
     const messageContenu = creerMessageEmail(entreprise, config, entreprise.type_candidature);
-
-    // Générer la lettre PDF
-    const prenom = config.prenom || 'user';
-    const nom = config.nom || 'user';
-    const safeName = `${prenom}${nom}`.replace(/[^a-zA-Z0-9]/g, '');
     
-    const lettrePdfPath = path.join(tmpDir, `Lettre_${safeName}.pdf`);
+    // Utiliser la lettre de motivation du config pour enrichir le message
+    const lettreMotivatoin = remplacerVariables(config.lettre_motivation, entreprise, config);
 
     try {
-      // Générer la lettre PDF
-      await generateLettrePDF(entreprise, config, lettrePdfPath);
-
       // Préparer les attachments
       const attachments = [];
 
-      // Ajouter la lettre PDF
-      if (fs.existsSync(lettrePdfPath)) {
+      // Ajouter le CV depuis le dossier uploads
+      const cvPath = path.join(__dirname, '../../uploads/CV.pdf');
+      if (fs.existsSync(cvPath)) {
         attachments.push({
-          filename: `Lettre_${safeName}.pdf`,
-          path: lettrePdfPath
+          filename: 'CV.pdf',
+          path: cvPath
         });
+      } else {
+        return res.status(400).json({ error: 'Le fichier CV.pdf n\'existe pas dans le dossier uploads' });
       }
 
-      // Ajouter le CV uploadé s'il existe
-      if (config.cv_path && fs.existsSync(config.cv_path)) {
-        attachments.push({
-          filename: `CV-${safeName}.pdf`,
-          path: config.cv_path
-        });
-      }
+      // Créer le message complet: intro + lettre de motivation
+      const messageComplet = `
+        ${messageContenu}
+        
+        <hr/>
+        
+        ${lettreMotivatoin}
+      `;
 
-      if (attachments.length === 0) {
-        return res.status(400).json({ error: 'Veuillez uploader votre CV dans la configuration' });
-      }
-
-      const result = await sendEmail(entreprise.email, subject, messageContenu, attachments, config.email, appPassword);
+      const result = await sendEmail(entreprise.email, subject, messageComplet, attachments, config.email, appPassword);
 
       if (result.success) {
-        // Nettoyer la lettre temporaire
-        fs.unlink(lettrePdfPath, () => {});
-
         // Mettre à jour le statut
         const index = entreprises.findIndex(e => e.id === entrepriseId);
         if (index > -1) {
@@ -167,8 +157,9 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
       } else {
         throw new Error(result.error);
       }
-    } catch (pdfError) {
-      res.status(500).json({ error: pdfError.message });
+    } catch (emailError) {
+      console.error('Erreur envoi email:', emailError);
+      res.status(500).json({ error: emailError.message });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -230,48 +221,41 @@ router.post('/envoyer-toutes', async (req, res) => {
       return res.status(400).json({ error: 'Email utilisateur ou mot de passe manquant' });
     }
     
-    if (!config.cv_path) {
-      return res.status(400).json({ error: 'Veuillez uploader votre CV dans la configuration' });
-    }
-    
     const nonEnvoyees = entreprises.filter(e => e.statut === STATUT_CANDIDATURE.NON_ENVOYE);
 
     let sent = 0;
     let failed = 0;
 
-    const prenom = config.prenom || 'user';
-    const nom = config.nom || 'user';
-    const safeName = `${prenom}${nom}`.replace(/[^a-zA-Z0-9]/g, '');
+    // Vérifier que le CV existe
+    const cvPath = path.join(__dirname, '../../uploads/CV.pdf');
+    if (!fs.existsSync(cvPath)) {
+      return res.status(400).json({ error: 'Le fichier CV.pdf n\'existe pas dans le dossier uploads' });
+    }
 
     for (const entreprise of nonEnvoyees) {
       try {
         const subject = `Candidature – ${config.poste_recherche}`;
         const messageContenu = creerMessageEmail(entreprise, config, entreprise.type_candidature);
+        const lettreMotivatoin = remplacerVariables(config.lettre_motivation, entreprise, config);
 
-        // Générer la lettre PDF
-        const lettrePdfPath = path.join(tmpDir, `Lettre_${safeName}.pdf`);
-        await generateLettrePDF(entreprise, config, lettrePdfPath);
+        // Créer le message complet: intro + lettre de motivation
+        const messageComplet = `
+          ${messageContenu}
+          
+          <hr/>
+          
+          ${lettreMotivatoin}
+        `;
 
         // Préparer les attachments
-        const attachments = [];
+        const attachments = [
+          {
+            filename: 'CV.pdf',
+            path: cvPath
+          }
+        ];
 
-        // Ajouter la lettre PDF
-        if (fs.existsSync(lettrePdfPath)) {
-          attachments.push({
-            filename: `Lettre_${safeName}.pdf`,
-            path: lettrePdfPath
-          });
-        }
-
-        // Ajouter le CV uploadé
-        if (fs.existsSync(config.cv_path)) {
-          attachments.push({
-            filename: `CV-${safeName}.pdf`,
-            path: config.cv_path
-          });
-        }
-
-        const result = await sendEmail(entreprise.email, subject, messageContenu, attachments, config.email, appPassword);
+        const result = await sendEmail(entreprise.email, subject, messageComplet, attachments, config.email, appPassword);
 
         if (result.success) {
           sent++;
@@ -280,9 +264,6 @@ router.post('/envoyer-toutes', async (req, res) => {
             entreprises[index].statut = STATUT_CANDIDATURE.ENVOYE;
             entreprises[index].date_envoi = new Date().toISOString();
           }
-          
-          // Nettoyer la lettre temporaire
-          fs.unlink(lettrePdfPath, () => {});
         } else {
           failed++;
           const index = entreprises.findIndex(e => e.id === entreprise.id);

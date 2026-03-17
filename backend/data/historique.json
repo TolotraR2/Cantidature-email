@@ -5,5 +5,19 @@
     "statut": "succes",
     "message": "Email envoyé avec succès",
     "date_envoi": "2026-03-17T12:10:38.380Z"
+  },
+  {
+    "id": "0232b12b-9ed2-49b9-8ebe-aae3e5556da2",
+    "entreprise_id": "4f33cd1b-e692-40fa-93ef-890ddc866403",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T12:53:30.590Z"
+  },
+  {
+    "id": "f85b129d-cc00-45d0-9378-cc97f5c61a6d",
+    "entreprise_id": "b53a21d8-3705-40c2-9cf1-f493a4e511f9",
+    "statut": "succes",
+    "message": "Email envoyé avec succès",
+    "date_envoi": "2026-03-17T12:53:48.402Z"
   }
 ]
