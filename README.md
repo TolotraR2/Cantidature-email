@@ -1,4 +1,4 @@
-# 📧 Job Auto Apply - Envoi Automatique de Candidatures
+# Job Auto Apply - Envoi Automatique de Candidatures
 
 Application moderne pour automatiser l'envoi de candidatures à plusieurs entreprises. **100% responsive** (mobile, tablette, desktop) et **sécurisé** (authentification locale).
 
@@ -6,12 +6,12 @@ Application moderne pour automatiser l'envoi de candidatures à plusieurs entrep
 
 ---
 
-## 🎯 Fonctionnalités
+## Fonctionnalités
 
 | Fonctionnalité | Description |
 |---|---|
-| 📋 **Gestion d'Entreprises** | Ajouter, modifier, supprimer, rechercher des entreprises |
-| 📝 **Lettre de Motivation** | Rédigez une lettre unique avec variables ({ENTREPRISE}, {VILLE}, {DATE}, etc.) |
+| **Gestion d'Entreprises** | Ajouter, modifier, supprimer, rechercher des entreprises |
+| **Lettre de Motivation** | Rédigez une lettre unique avec variables ({ENTREPRISE}, {VILLE}, {DATE}, etc.) |
 | 📧 **Envoi d'Emails** | Envoi unitaire ou en masse avec délai configurable |
 | 📊 **Dashboard** | Statistiques en temps réel (graphiques, cartes) |
 | 📜 **Historique** | Suivi complet des envois réussis/échoués |

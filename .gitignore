@@ -13,6 +13,11 @@ build/
 .env.local
 .env.*.local
 
+# Uploads and temporary files
+uploads/
+tmp/
+*.pdf
+
 # IDE
 .vscode/
 .idea/

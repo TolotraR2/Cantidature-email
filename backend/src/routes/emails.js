@@ -133,6 +133,49 @@ router.post('/envoyer-candidature/:entrepriseId', async (req, res) => {
   }
 });
 
+// Générer et retourner la lettre PDF pour téléchargement
+router.get('/lettre/:entrepriseId', async (req, res) => {
+  try {
+    const { entrepriseId } = req.params;
+    
+    // Récupérer l'entreprise et la config
+    const entreprises = readJSON('entreprises.json');
+    const entreprise = entreprises.find(e => e.id === entrepriseId);
+    const config = readJSON('config.json')[0];
+
+    if (!entreprise) {
+      return res.status(404).json({ error: 'Entreprise non trouvée' });
+    }
+
+    // Générer la lettre PDF
+    const prenom = config.prenom || 'user';
+    const nom = config.nom || 'user';
+    const safeName = `${prenom}${nom}`.replace(/[^a-zA-Z0-9]/g, '');
+    
+    const lettrePdfPath = path.join(tmpDir, `Lettre_${safeName}.pdf`);
+
+    // Générer la lettre
+    await generateLettrePDF(entreprise, config, lettrePdfPath);
+
+    // Retourner le fichier avec le bon nom
+    const filename = `LM-${entreprise.nom_entreprise.replace(/[^a-zA-Z0-9]/g, '')}.pdf`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/pdf');
+    
+    // Envoyer le fichier
+    const fileStream = fs.createReadStream(lettrePdfPath);
+    fileStream.pipe(res);
+    
+    // Nettoyer après envoi
+    fileStream.on('end', () => {
+      fs.unlink(lettrePdfPath, () => {});
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Envoyer toutes les candidatures non envoyées
 router.post('/envoyer-toutes', async (req, res) => {
   try {

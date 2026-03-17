@@ -86,8 +86,27 @@ export default function Entreprises() {
         return
       }
       await emailsAPI.envoyer(id, password)
+      
+      // Télécharger automatiquement la lettre PDF
+      try {
+        const entreprise = entreprises.find(e => e.id === id)
+        if (entreprise) {
+          const response = await emailsAPI.telechargerLettre(id)
+          const url = window.URL.createObjectURL(new Blob([response.data]))
+          const link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', `LM-${entreprise.nom_entreprise}.pdf`)
+          document.body.appendChild(link)
+          link.click()
+          link.parentNode.removeChild(link)
+          window.URL.revokeObjectURL(url)
+        }
+      } catch (downloadError) {
+        console.warn('Téléchargement du PDF échoué (non bloquant):', downloadError)
+      }
+      
       await fetchEntreprises()
-      alert('✅ Email envoyé avec succès')
+      alert('Email envoyé avec succès')
       setError('')
     } catch (error) {
       console.error('Erreur:', error)
@@ -104,7 +123,7 @@ export default function Entreprises() {
           return
         }
         const result = await emailsAPI.envoyerTous(password)
-        alert(`✅ ${result.data.sent} envoyées\n❌ ${result.data.failed} échouées`)
+        alert(`${result.data.sent} envoyées\n${result.data.failed} échouées`)
         await fetchEntreprises()
         setError('')
       } catch (error) {
@@ -203,10 +222,10 @@ export default function Entreprises() {
             </div>
             <div className="flex gap-2">
               <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition font-semibold text-sm">
-                {editingId ? '✅ Mettre à jour' : '✅ Ajouter'}
+                {editingId ? 'Mettre à jour' : 'Ajouter'}
               </button>
               <button type="button" onClick={handleCancel} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition font-semibold text-sm">
-                ❌ Annuler
+                Annuler
               </button>
             </div>
           </form>

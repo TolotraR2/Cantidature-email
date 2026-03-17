@@ -241,7 +241,7 @@ export default function Configuration() {
 
           <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
             <p className="text-xs sm:text-sm text-blue-900">
-              <strong>📝 Variables disponibles:</strong>
+              <strong>Variables disponibles:</strong>
               <br/>
               {'{'}ENTREPRISE{'}'} - Nom de l'entreprise
               <br/>

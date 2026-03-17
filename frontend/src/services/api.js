@@ -50,7 +50,14 @@ export const configAPI = {
 // Emails
 export const emailsAPI = {
   envoyer: (entrepriseId, appPassword) => client.post(`/emails/envoyer-candidature/${entrepriseId}`, { appPassword }),
-  envoyerTous: (appPassword) => client.post('/emails/envoyer-toutes', { appPassword })
+  envoyerTous: (appPassword) => client.post('/emails/envoyer-toutes', { appPassword }),
+  telechargerLettre: (entrepriseId) => {
+    // Pour le téléchargement de fichier
+    return axios.get(
+      `${API_BASE}/emails/lettre/${entrepriseId}`,
+      { responseType: 'blob' }
+    )
+  }
 }
 
 // Historique
